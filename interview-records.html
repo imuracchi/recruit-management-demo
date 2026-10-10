@@ -29,7 +29,7 @@ e.preventDefault();stash();const d=state.drafts[active];if(!d.date||!d.body.trim
 const r={date:d.date,evaluation:d.evaluation,body:d.body.trim(),author:role==='mentor'?'田中（メンター）':'田中（CA）',savedAt:new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})};
 if(!state.records[active])state.records[active]=[];
 state.records[active].push(r);state.drafts[active].body='';
-if(!persist()){state.records[active].pop();state.drafts[active].body=d.body;$('feedback').textContent='保存できませんでした。入力内容を保持しています。';return}
+if(!persist()){state.records[active].pop();state.drafts[active].body=r.body;$('feedback').textContent='保存できませんでした。入力内容を保持しています。';return}
 $('query').value='';$('filter').value='';render();$('feedback').textContent='面接記録をこのブラウザに保存しました。記録一覧から後で見直せます。';$('list').scrollIntoView({behavior:'smooth'})
 }
 window.addEventListener('beforeunload',()=>{stash();persist()});render();
