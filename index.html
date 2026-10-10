@@ -13,6 +13,17 @@ function dateStr(d){return new Date(d.getTime()+9*3600000).toISOString().slice(0
 function today(){monday=new Date(dateStr(new Date())+'T00:00:00+09:00');render()}
 function move(n){monday=new Date(monday.getTime()+n*7*86400000);render()}
 function minutes(s){return Number(s.slice(11,13))*60+Number(s.slice(14,16))}
+function arrange(events){
+const sorted=events.slice().sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end)||a.id.localeCompare(b.id));
+const result=[];let group=[],groupEnd='',lanes=[];
+function finish(){for(const item of group)result.push({...item,columns:lanes.length});group=[];lanes=[]}
+for(const event of sorted){
+if(group.length&&event.start>=groupEnd)finish();
+let column=lanes.findIndex(end=>end<=event.start);if(column<0)column=lanes.length;
+lanes[column]=event.end;group.push({event,column});groupEnd=group.length===1?event.end:(groupEnd>event.end?groupEnd:event.end);
+}
+finish();return result;
+}
 function calendar(id,events){
 const dates=Array.from({length:7},(_,i)=>dateStr(new Date(monday.getTime()+i*86400000)));
 const weekEvents=events.filter(e=>dates.includes(e.start.slice(0,10)));let start=8,end=20;
@@ -21,7 +32,7 @@ let h='<div class="week"><div class="head timehead">JST</div>'+dates.map((d,i)=>
 h+='<div class="timeaxis" style="height:'+height+'px">'+Array.from({length:hours},(_,i)=>'<span style="top:'+(i*64)+'px">'+String(start+i).padStart(2,'0')+':00</span>').join('')+'</div>';
 h+=dates.map(d=>{
 const rows=events.filter(e=>e.start.slice(0,10)===d).sort((a,b)=>a.start.localeCompare(b.start));
-return '<div class="day" style="height:'+height+'px">'+rows.map(e=>{const top=(minutes(e.start)-start*60)*64/60;const size=(minutes(e.end)-minutes(e.start))*64/60;const overlap=rows.filter(r=>r.start<e.end&&r.end>e.start);const slot=overlap.findIndex(r=>r.id===e.id),width=100/overlap.length;
+return '<div class="day" style="height:'+height+'px">'+arrange(rows).map(({event:e,column,columns})=>{const top=(minutes(e.start)-start*60)*64/60;const size=(minutes(e.end)-minutes(e.start))*64/60;const slot=column,width=100/columns;
 return '<div class="event '+(e.private?'personal':'')+'" style="top:'+top+'px;height:'+Math.max(24,size)+'px;left:calc('+slot*width+'% + 3px);width:calc('+width+'% - 6px)" title="'+esc(e.title)+' '+e.start.slice(11)+'〜'+e.end.slice(11)+'"><b>'+esc(e.title)+'</b><span>'+e.start.slice(11)+'〜'+e.end.slice(11)+'</span></div>'}).join('')+'</div>'
 }).join('')+'</div>';$ (id).innerHTML=h;
 }
